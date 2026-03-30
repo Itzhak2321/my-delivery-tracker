@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחשבון שליחויות</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f9; padding: 20px; text-align: center; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+        input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        button { width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .result { margin-top: 20px; font-weight: bold; font-size: 1.2em; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>מחשבון שליחויות</h2>
+        <input type="number" id="income" placeholder="הכנסה ברוטו (₪)">
+        <input type="number" id="fuel" placeholder="עלות דלק (₪)">
+        <input type="number" id="km" placeholder="קילומטרים שבוצעו">
+        <button onclick="calculate()">חשב רווח נקי</button>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        function calculate() {
+            const income = document.getElementById('income').value;
+            const fuel = document.getElementById('fuel').value;
+            const commission = income * 0.12; // עמלה 12%
+            const net = income - fuel - commission;
+            document.getElementById('result').innerHTML = `רווח נקי: ₪${net.toFixed(2)}<br><small>(אחרי 12% עמלה ודלק)</small>`;
+        }
+    </script>
+</body>
+</html>
