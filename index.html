@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחשבון שליחויות - סנכרון ענן</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f4f7f6; padding: 20px; margin: 0; text-align: center; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 450px; margin: auto; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; background: white; }
+        th, td { padding: 10px; border: 1px solid #eee; font-size: 14px; }
+        th { background: #f8f9fa; }
+        .total { margin-top: 15px; font-weight: bold; color: #2c3e50; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>הזנת משמרת 🚚</h2>
+    <input type="number" id="income" placeholder="הכנסה ברוטו (₪)">
+    <input type="number" id="fuel" placeholder="דלק (₪)">
+    <button onclick="saveShift()">שמור נתונים לענן</button>
+
+    <div class="total" id="weeklyTotal">טוען נתונים...</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>תאריך</th>
+                <th>הכנסה</th>
+                <th>רווח נקי</th>
+            </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+    </table>
+</div>
+
+<script>
+    // הגדרות הפרויקט שלך (העתקתי מהפרויקט שיצרנו)
+    const firebaseConfig = {
+        projectId: "my-delivery-tracker-cc1f0",
+        authDomain: "my-delivery-tracker-cc1f0.firebaseapp.com",
+    };
+    
+    // אתחול Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // פונקציה לשמירת נתונים
+    async function saveShift() {
+        const inc = parseFloat(document.getElementById('income').value);
+        const fuel = parseFloat(document.getElementById('fuel').value);
+        if(!inc || !fuel) return alert("מלא שדות!");
+
+        const net = inc - fuel - (inc * 0.12);
+        const date = new Date();
+
+        try {
+            await db.collection("shifts").add({
+                date: date,
+                displayDate: date.toLocaleDateString('he-IL'),
+                income: inc,
+                net: net
+            });
+            alert("נשמר בהצלחה!");
+            location.reload(); // רענון להצגת הנתון החדש
+        } catch (e) {
+            alert("שגיאה בשמירה: " + e.message);
+        }
+    }
+
+    // פונקציה למשיכת נתונים והצגתם
+    function loadData() {
+        db.collection("shifts").orderBy("date", "desc").limit(10).get().then((querySnapshot) => {
+            const body = document.getElementById('historyBody');
+            body.innerHTML = '';
+            let totalNet = 0;
+
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                totalNet += data.net;
+                body.innerHTML += `<tr>
+                    <td>${data.displayDate}</td>
+                    <td>₪${data.income}</td>
+                    <td>₪${data.net.toFixed(2)}</td>
+                </tr>`;
+            });
+            document.getElementById('weeklyTotal').innerHTML = `סה"כ רווח נקי (10 אחרונים): ₪${totalNet.toFixed(2)}`;
+        });
+    }
+
+    loadData();
+</script>
+</body>
+</html>
