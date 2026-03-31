@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון שליחויות - גרסה נקייה 🍓</title>
+    <title>מחשבון שליחויות - גרסת הדיוק 🍓</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -24,7 +24,7 @@
         .settings-toggle { color: var(--primary); font-size: 13px; text-decoration: underline; cursor: pointer; display: block; text-align: center; margin-bottom: 10px; }
         .info-box { background: #fff3cd; padding: 10px; border-radius: 8px; margin: 10px 0; text-align: center; font-size: 14px; border: 1px solid #ffeeba; }
         .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; background: white; font-size: 11px; min-width: 500px; }
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 11px; min-width: 550px; }
         th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
         th { background: #343a40; color: white; }
         .footer-row { background: #e9ecef !important; font-weight: bold; border-top: 2px solid #333; }
@@ -39,7 +39,7 @@
         <div class="input-group"><label>ק"מ לליטר</label><input type="number" id="cfg_kmPerLiter" value="16"></div>
         <div class="input-group"><label>מקדם עלייה</label><input type="number" id="cfg_upFactor" value="1.6"></div>
         <div class="input-group"><label>מקדם ירידה</label><input type="number" id="cfg_downFactor" value="0.85"></div>
-        <div class="input-group"><label>מחיר ליטר</label><input type="number" id="cfg_fuelPrice" value="7.50"></div>
+        <div class="input-group"><label>מחיר ליטר (₪)</label><input type="number" id="cfg_fuelPrice" value="8.03"></div>
         <div class="input-group"><label>בלאי לק"מ</label><input type="number" id="cfg_depreciation" value="0.20"></div>
         <button class="btn" style="background:#ddd" onclick="toggleSettings()">סגור</button>
     </div>
@@ -192,24 +192,25 @@
 
         if (data) {
             Object.values(data).sort((a,b)=>b.timestamp-a.timestamp).forEach(x => {
-                tKm += x.km; tFuel += x.fuel; tStraw += (x.strawberries || 0); tNet += x.net;
+                const s = x.strawberries || 0;
+                tKm += x.km; tFuel += x.fuel; tStraw += s; tNet += x.net;
                 body.innerHTML += `
                     <tr>
                         <td>${x.date}</td>
-                        <td>${x.km.toFixed(0)}</td>
-                        <td>${x.fuel.toFixed(0)}</td>
-                        <td style="color:red">₪${(x.strawberries || 0).toFixed(0)}</td>
-                        <td><b>₪${x.net.toFixed(0)}</b></td>
+                        <td>${x.km.toFixed(1)}</td>
+                        <td>${x.fuel.toFixed(1)}</td>
+                        <td style="color:red">₪${s.toFixed(2)}</td>
+                        <td><b>₪${x.net.toFixed(1)}</b></td>
                         <td><button class="del-btn" onclick="deleteEntry('${x.timestamp}')">🗑️</button></td>
                     </tr>`;
             });
             footer.innerHTML = `
                 <tr class="footer-row">
                     <td>סה"כ</td>
-                    <td>${tKm.toFixed(0)}</td>
-                    <td>₪${tFuel.toFixed(0)}</td>
-                    <td style="color:red">₪${tStraw.toFixed(0)}</td>
-                    <td style="color:green">₪${tNet.toFixed(0)}</td>
+                    <td>${tKm.toFixed(1)}</td>
+                    <td>₪${tFuel.toFixed(1)}</td>
+                    <td style="color:red">₪${tStraw.toFixed(2)}</td>
+                    <td style="color:green">₪${tNet.toFixed(1)}</td>
                     <td></td>
                 </tr>`;
         }
