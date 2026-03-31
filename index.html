@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון שליחויות - כולל בלאי</title>
+    <title>מחשבון שליחויות חכם - מרחק אוטומטי</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -15,18 +15,19 @@
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
         h2 { margin: 0 0 15px 0; color: #333; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         
-        .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        .input-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 14px; }
         input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
         
-        button { width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .geo-btn { background: #6c757d; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; margin-top: 5px; width: 100%; }
+        .save-btn { width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         
+        .distance-info { background: #fff3cd; padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 14px; display: none; text-align: center; font-weight: bold; }
         .summary-box { background: #e9ecef; padding: 15px; border-radius: 10px; margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .stat { text-align: center; }
-        .stat-label { font-size: 11px; color: #666; display: block; }
         .stat-value { font-size: 18px; font-weight: bold; }
 
-        table { width: 100%; margin-top: 20px; border-collapse: collapse; background: white; font-size: 13px; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; background: white; font-size: 12px; }
         th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
         th { background: #343a40; color: white; }
     </style>
@@ -44,35 +45,30 @@
             <label>עלות דלק (₪)</label>
             <input type="number" id="fuel" placeholder="0.00" inputmode="decimal">
         </div>
-        <div class="input-group">
-            <label>קילומטרים שבוצעו (ק"מ)</label>
-            <input type="number" id="km" placeholder="כמה נסעת היום?" inputmode="decimal">
+
+        <div style="border: 1px dashed #ccc; padding: 10px; border-radius: 10px; background: #fafafa;">
+            <label>📍 חישוב מרחק אוטומטי</label>
+            <input type="text" id="startLoc" placeholder="מאיפה? (למשל: אשדוד)" style="margin-bottom: 5px;">
+            <input type="text" id="endLoc" placeholder="לאן? (למשל: ירושלים)">
+            <label style="font-weight: normal; margin-top: 10px; display: flex; align-items: center;">
+                <input type="checkbox" id="roundTrip" style="width: 20px; margin: 0 5px;"> חישוב הלוך חזור
+            </label>
+            <button type="button" class="geo-btn" onclick="getDistance()">חשב ק"מ אוטומטית</button>
+            <div id="distOutput" class="distance-info"></div>
+            <input type="hidden" id="kmValue" value="0">
         </div>
-        <button onclick="saveData()">שמור נתונים לענן</button>
+
+        <button class="save-btn" onclick="saveData()">שמור משמרת לענן</button>
     </div>
 
     <div class="card">
         <h2>סיכום רווחים 🗓️</h2>
         <div class="summary-box">
-            <div class="stat">
-                <span class="stat-label">סה"כ הכנסה</span>
-                <div class="stat-value" id="totalInc">₪0</div>
-            </div>
-            <div class="stat">
-                <span class="stat-label">רווח נקי (אחרי בלאי)</span>
-                <div class="stat-value" id="totalNet" style="color: var(--success);">₪0</div>
-            </div>
+            <div class="stat"><span style="font-size: 11px;">ברוטו</span><div id="totalInc" class="stat-value">₪0</div></div>
+            <div class="stat"><span style="font-size: 11px;">נקי (אחרי בלאי)</span><div id="totalNet" class="stat-value" style="color: var(--success);">₪0</div></div>
         </div>
-
-        <table id="historyTable">
-            <thead>
-                <tr>
-                    <th>תאריך</th>
-                    <th>ק"מ</th>
-                    <th>נקי</th>
-                    <th>✖</th>
-                </tr>
-            </thead>
+        <table>
+            <thead><tr><th>תאריך</th><th>ק"מ</th><th>נקי</th><th>✖</th></tr></thead>
             <tbody id="tableBody"></tbody>
         </table>
     </div>
@@ -93,35 +89,59 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
+    async function getDistance() {
+        const start = document.getElementById('startLoc').value;
+        const end = document.getElementById('endLoc').value;
+        const output = document.getElementById('distOutput');
+        
+        if (!start || !end) return alert("נא להזין מוצא ויעד");
+        output.style.display = "block";
+        output.innerText = "מחשב מרחק...";
+
+        try {
+            // מציאת קואורדינטות
+            const getCoords = async (loc) => {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${loc}`);
+                const data = await res.json();
+                return data[0];
+            };
+
+            const loc1 = await getCoords(start);
+            const loc2 = await getCoords(end);
+
+            // חישוב מרחק נסיעה (OSRM)
+            const routeRes = await fetch(`https://router.project-osrm.org/route/v1/driving/${loc1.lon},${loc1.lat};${loc2.lon},${loc2.lat}?overview=false`);
+            const routeData = await routeRes.json();
+            
+            let km = routeData.routes[0].distance / 1000;
+            if (document.getElementById('roundTrip').checked) km = km * 2;
+
+            document.getElementById('kmValue').value = km.toFixed(1);
+            output.innerText = `מרחק מחושב: ${km.toFixed(1)} ק"מ`;
+        } catch (e) {
+            output.innerText = "שגיאה בחישוב המרחק. נסה שוב.";
+        }
+    }
+
     function saveData() {
         const inc = parseFloat(document.getElementById('income').value);
         const fuel = parseFloat(document.getElementById('fuel').value);
-        const km = parseFloat(document.getElementById('km').value);
+        const km = parseFloat(document.getElementById('kmValue').value);
 
-        if (isNaN(inc) || isNaN(fuel) || isNaN(km)) {
-            alert("נא למלא את כל השדות במספרים");
-            return;
-        }
+        if (!inc || !fuel || km === 0) return alert("נא למלא הכנסה, דלק ולחשב מרחק");
 
-        // חישוב: הכנסה - דלק - 12% עמלה - (20 אגורות * קילומטר)
-        const depreciation = km * 0.20;
-        const commission = inc * 0.12;
-        const net = inc - fuel - commission - depreciation;
-        
-        const date = new Date().toLocaleDateString('he-IL');
+        const net = inc - fuel - (inc * 0.12) - (km * 0.20);
         const timestamp = Date.now();
 
         database.ref('shifts/' + timestamp).set({
-            date: date,
+            date: new Date().toLocaleDateString('he-IL'),
             income: inc,
             km: km,
             net: net,
             timestamp: timestamp
         }).then(() => {
-            document.getElementById('income').value = '';
-            document.getElementById('fuel').value = '';
-            document.getElementById('km').value = '';
-            alert("נשמר! הרווח הנקי למשמרת: ₪" + net.toFixed(2));
+            alert("נשמר בהצלחה!");
+            location.reload();
         });
     }
 
@@ -132,26 +152,16 @@
         let sumInc = 0; let sumNet = 0;
 
         if (data) {
-            const sorted = Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
-            sorted.forEach((shift) => {
-                sumInc += shift.income;
-                sumNet += shift.net;
-                tableBody.innerHTML += `
-                    <tr>
-                        <td>${shift.date}</td>
-                        <td>${shift.km}</td>
-                        <td>₪${shift.net.toFixed(0)}</td>
-                        <td><button onclick="deleteShift('${shift.timestamp}')" style="background:none; border:none; color:red; cursor:pointer;">🗑️</button></td>
-                    </tr>`;
+            Object.values(data).sort((a, b) => b.timestamp - a.timestamp).forEach((s) => {
+                sumInc += s.income; sumNet += s.net;
+                tableBody.innerHTML += `<tr><td>${s.date}</td><td>${s.km}</td><td>₪${s.net.toFixed(0)}</td><td><button onclick="deleteShift('${s.timestamp}')" style="background:none;border:none;color:red;">🗑️</button></td></tr>`;
             });
         }
         document.getElementById('totalInc').innerText = `₪${sumInc.toFixed(0)}`;
         document.getElementById('totalNet').innerText = `₪${sumNet.toFixed(0)}`;
     });
 
-    function deleteShift(id) {
-        if(confirm("למחוק?")) database.ref('shifts/' + id).remove();
-    }
+    function deleteShift(id) { if(confirm("למחוק?")) database.ref('shifts/' + id).remove(); }
 </script>
 
 </body>
