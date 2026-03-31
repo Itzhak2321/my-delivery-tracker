@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון שליחויות - גרסה מהירה 🛵</title>
+    <title>מחשבון שליחויות - תיקון מחיקה 🛵</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -11,43 +11,33 @@
     <style>
         :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --bg: #f0f2f5; }
         body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #333; }
-        .container { max-width: 500px; margin: auto; padding-bottom: 110px; }
-        
+        .container { max-width: 500px; margin: auto; padding-bottom: 120px; }
         .card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 15px; }
         h2 { margin: 0 0 15px 0; text-align: center; font-size: 1.1em; }
-        
         .input-group { margin-bottom: 10px; }
         label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 13px; color: #555; }
         input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-        
         .checkbox-row { display: flex; gap: 10px; margin: 15px 0; justify-content: space-around; }
         .checkbox-item { display: flex; align-items: center; font-size: 13px; background: #fff; padding: 8px 12px; border-radius: 20px; border: 1px solid #ddd; }
         .checkbox-item input { margin-left: 8px; width: 18px; height: 18px; }
-
         .btn { width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn-calc { background: #6c757d; color: white; }
         .btn-save { background: var(--success); color: white; margin-top: 10px; }
-        
-        /* עיצוב כרטיסיות היסטוריה מעודכן */
         .history-item { background: white; padding: 12px; border-radius: 12px; margin-bottom: 10px; border-right: 5px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .route-info { display: flex; flex-direction: column; }
         .history-route { font-weight: bold; font-size: 14px; color: #222; }
         .history-date { font-size: 11px; color: #888; margin-top: 2px; }
-        
-        .history-grid { display: grid; grid-template-columns: 1fr 1fr 1.2fr 1fr; gap: 5px; text-align: center; border-top: 1px solid #f0f0f0; pt: 8px; padding-top: 8px;}
+        .history-grid { display: grid; grid-template-columns: 1fr 1fr 1.2fr 1fr; gap: 5px; text-align: center; border-top: 1px solid #f0f0f0; padding-top: 8px; }
         .data-point { font-size: 10px; color: #777; }
         .data-point b { display: block; font-size: 13px; color: #333; margin-top: 2px; }
-        .del-btn { color: #ccc; background: none; border: none; font-size: 18px; cursor: pointer; padding: 5px; }
+        .del-btn { color: #ddd; background: none; border: none; font-size: 20px; cursor: pointer; padding: 5px; line-height: 1; transition: 0.2s; }
         .del-btn:hover { color: var(--danger); }
-
-        /* סיכום תחתון */
-        .summary-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #2d3436; color: white; padding: 12px 5px; display: flex; justify-content: space-around; text-align: center; border-radius: 20px 20px 0 0; box-shadow: 0 -4px 15px rgba(0,0,0,0.3); z-index: 100; }
+        .summary-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #2d3436; color: white; padding: 15px 5px; display: flex; justify-content: space-around; text-align: center; border-radius: 20px 20px 0 0; box-shadow: 0 -4px 15px rgba(0,0,0,0.3); z-index: 100; }
         .sum-item { flex: 1; border-left: 1px solid #444; }
         .sum-item:last-child { border-left: none; }
         .sum-item span { display: block; font-size: 10px; color: #aaa; margin-bottom: 2px; }
         .sum-item b { font-size: 14px; }
-
         .settings-toggle { color: var(--primary); font-size: 12px; text-decoration: underline; text-align: center; display: block; margin-bottom: 10px; cursor: pointer; }
         .settings-content { display: none; background: #eee; padding: 10px; border-radius: 10px; margin-bottom: 10px; }
         .info-box { background: #fff3cd; padding: 10px; border-radius: 10px; margin-top: 10px; text-align: center; font-size: 14px; }
@@ -61,46 +51,36 @@
         <div class="input-group"><label>ק"מ לליטר</label><input type="number" id="cfg_kmPerLiter" value="16"></div>
         <div class="input-group"><label>מחיר ליטר</label><input type="number" id="cfg_fuelPrice" value="8.03"></div>
         <div class="input-group"><label>בלאי לק"מ</label><input type="number" id="cfg_depreciation" value="0.20"></div>
-        <input type="hidden" id="cfg_upFactor" value="1.6">
-        <input type="hidden" id="cfg_downFactor" value="0.85">
         <button class="btn" style="background:#ccc" onclick="toggleSettings()">סגור</button>
     </div>
 
     <div class="card">
         <h2>רישום משמרת 🛵</h2>
-        <div class="input-group">
-            <label>💰 הכנסה ברוטו (₪)</label>
-            <input type="number" id="income" placeholder="סהכ שהתקבל" inputmode="decimal">
-        </div>
-
+        <div class="input-group"><label>💰 הכנסה ברוטו (₪)</label><input type="number" id="income" placeholder="סהכ שהתקבל" inputmode="decimal"></div>
         <div style="background: #f8fbff; padding: 10px; border-radius: 12px; border: 1px solid #dce7f5;">
             <label>📍 מסלול</label>
             <input type="text" id="startLoc" placeholder="מאיפה?" style="margin-bottom:8px">
             <input type="text" id="endLoc" placeholder="לאן?">
-            
             <div class="checkbox-row">
                 <label class="checkbox-item"><input type="checkbox" id="roundTrip"> הלוך חזור</label>
                 <label class="checkbox-item" style="color:#d63384"><input type="checkbox" id="isClean"> נקי ✨</label>
             </div>
-
             <button class="btn btn-calc" onclick="calculateRoute()">חשב דלק ומרחק ⚡</button>
             <div id="routeOutput" class="info-box" style="display:none"></div>
         </div>
-
         <input type="hidden" id="fuelValue" value="0">
         <input type="hidden" id="kmValue" value="0">
         <button class="btn btn-save" onclick="saveShift()">שמור משמרת ✅</button>
     </div>
 
-    <div id="historyList">
-        </div>
+    <div id="historyList"></div>
 </div>
 
-<div class="summary-bar" id="summaryBar">
-    <div class="sum-item"><span>ק"מ סה"כ</span><b id="totalKm">0</b></div>
+<div class="summary-bar">
+    <div class="sum-item"><span>ק"מ</span><b id="totalKm">0</b></div>
     <div class="sum-item"><span>דלק</span><b id="totalFuel">₪0</b></div>
     <div class="sum-item"><span>תותים 🍓</span><b id="totalStraw">₪0</b></div>
-    <div class="sum-item"><span>נטו רווח</span><b id="totalNet" style="color:#2ecc71">₪0</b></div>
+    <div class="sum-item"><span>נטו</span><b id="totalNet" style="color:#2ecc71">₪0</b></div>
 </div>
 
 <script>
@@ -141,7 +121,6 @@
             const rr = await fetch(`https://router.project-osrm.org/route/v1/driving/${c1.lon},${c1.lat};${c2.lon},${c2.lat}?overview=false`);
             const rd = await rr.json();
             const owKm = rd.routes[0].distance / 1000;
-
             const avg = parseFloat(document.getElementById('cfg_kmPerLiter').value);
             const pr = parseFloat(document.getElementById('cfg_fuelPrice').value);
             
@@ -150,7 +129,6 @@
             else if(start.includes("ירושלים")) cOut *= 0.85;
 
             let cBack = isRT ? ((owKm/avg)*pr * (end.includes("ירושלים") ? 0.85 : (start.includes("ירושלים") ? 1.6 : 1.0))) : 0;
-
             const tF = cOut + cBack;
             const tK = isRT ? owKm * 2 : owKm;
 
@@ -167,23 +145,36 @@
         const isC = document.getElementById('isClean').checked;
         const start = document.getElementById('startLoc').value;
         const end = document.getElementById('endLoc').value;
+        const dep = parseFloat(document.getElementById('cfg_depreciation').value);
 
-        if (!inc || isNaN(fuel)) return alert("חשב מסלול קודם");
+        if (!inc || isNaN(fuel) || fuel === 0) return alert("חשב מסלול קודם");
 
         const straw = isC ? 0 : (inc * 0.12);
-        const net = inc - fuel - straw - (km * 0.20);
+        const net = inc - fuel - straw - (km * dep);
+        const id = Date.now().toString(); // מזהה ייחודי חזק
         
-        database.ref('shifts/' + Date.now()).set({
+        database.ref('shifts/' + id).set({
+            id: id,
             date: new Date().toLocaleDateString('he-IL'),
             route: `${start} ⬅️ ${end}`,
             fuel: fuel, km: km, strawberries: straw, net: net, timestamp: Date.now()
-        }).then(() => { location.reload(); });
+        }).then(() => { 
+            // ניקוי שדות בלי רענון דף
+            document.getElementById('income').value = '';
+            document.getElementById('startLoc').value = '';
+            document.getElementById('endLoc').value = '';
+            document.getElementById('routeOutput').style.display = 'none';
+        });
     }
 
     function deleteEntry(id) {
-        if(confirm("למחוק?")) database.ref('shifts/' + id).remove();
+        if(confirm("למחוק את הכרטיסייה?")) {
+            database.ref('shifts/' + id).remove()
+            .catch(err => alert("שגיאה במחיקה: " + err));
+        }
     }
 
+    // מאזין לשינויים ב-Firebase - מעדכן את התצוגה בזמן אמת
     database.ref('shifts').on('value', (s) => {
         const data = s.val();
         const list = document.getElementById('historyList');
@@ -191,7 +182,11 @@
         let tK=0, tF=0, tS=0, tN=0;
 
         if (data) {
-            Object.values(data).sort((a,b)=>b.timestamp-a.timestamp).forEach(x => {
+            // הפיכה למערך ומיון לפי זמן (החדש ביותר למעלה)
+            const items = Object.keys(data).map(key => data[key]);
+            items.sort((a,b) => b.timestamp - a.timestamp);
+
+            items.forEach(x => {
                 tK += x.km; tF += x.fuel; tS += x.strawberries; tN += x.net;
                 list.innerHTML += `
                     <div class="history-item">
@@ -200,7 +195,7 @@
                                 <span class="history-route">${x.route}</span>
                                 <span class="history-date">${x.date}</span>
                             </div>
-                            <button class="del-btn" onclick="deleteEntry('${x.timestamp}')">🗑️</button>
+                            <button class="del-btn" onclick="deleteEntry('${x.id}')">🗑️</button>
                         </div>
                         <div class="history-grid">
                             <div class="data-point">ק"מ <b>${x.km.toFixed(1)}</b></div>
