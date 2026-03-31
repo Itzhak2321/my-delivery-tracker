@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון שליחויות - ניהול מלא</title>
+    <title>מחשבון שליחויות - גרסת התותים 🍓</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -11,43 +11,36 @@
     <style>
         :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --bg: #f4f7f6; }
         body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        .container { max-width: 600px; margin: auto; }
+        .container { max-width: 650px; margin: auto; }
         .card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        h2 { margin: 0 0 15px 0; text-align: center; font-size: 1.2em; }
-        
+        h2 { margin: 0 0 15px 0; text-align: center; font-size: 1.2em; color: #333; }
         .input-group { margin-bottom: 10px; }
         label { display: block; margin-bottom: 4px; font-weight: bold; color: #555; font-size: 13px; }
-        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-        
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn-calc { background: #6c757d; color: white; margin-top: 5px; }
-        .btn-save { background: var(--success); color: white; margin-top: 10px; }
-        
-        .settings-content { display: none; background: #f9f9f9; padding: 12px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 10px; }
-        .settings-toggle { color: var(--primary); font-size: 13px; text-decoration: underline; cursor: pointer; display: block; text-align: center; margin-bottom: 8px; }
-
+        .btn-save { background: var(--success); color: white; margin-top: 15px; }
+        .settings-content { display: none; background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 15px; }
+        .settings-toggle { color: var(--primary); font-size: 13px; text-decoration: underline; cursor: pointer; display: block; text-align: center; margin-bottom: 10px; }
         .info-box { background: #fff3cd; padding: 10px; border-radius: 8px; margin: 10px 0; text-align: center; font-size: 14px; }
-        
-        /* עיצוב הטבלה */
         .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; background: white; font-size: 12px; min-width: 400px; }
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 11px; min-width: 500px; }
         th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
-        th { background: #343a40; color: white; position: sticky; top: 0; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .footer-row { background: #eee !important; font-weight: bold; border-top: 2px solid #333; }
+        th { background: #343a40; color: white; }
+        .footer-row { background: #e9ecef !important; font-weight: bold; border-top: 2px solid #333; }
         .del-btn { background: none; border: none; color: var(--danger); font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <span class="settings-toggle" onclick="toggleSettings()">⚙️ הגדרות רכב וכיול</span>
+    <span class="settings-toggle" onclick="toggleSettings()">⚙️ הגדרות וכיול</span>
     <div id="settingsArea" class="settings-content">
         <div class="input-group"><label>ק"מ לליטר</label><input type="number" id="cfg_kmPerLiter" value="16"></div>
-        <div class="input-group"><label>מקדם עלייה</label><input type="number" id="cfg_upFactor" value="1.6" step="0.1"></div>
-        <div class="input-group"><label>מקדם ירידה</label><input type="number" id="cfg_downFactor" value="0.85" step="0.05"></div>
+        <div class="input-group"><label>מקדם עלייה</label><input type="number" id="cfg_upFactor" value="1.6"></div>
+        <div class="input-group"><label>מקדם ירידה</label><input type="number" id="cfg_downFactor" value="0.85"></div>
         <div class="input-group"><label>מחיר ליטר</label><input type="number" id="cfg_fuelPrice" value="7.50"></div>
-        <div class="input-group"><label>בלאי לק"מ (₪)</label><input type="number" id="cfg_depreciation" value="0.20"></div>
+        <div class="input-group"><label>בלאי לק"מ</label><input type="number" id="cfg_depreciation" value="0.20"></div>
         <button class="btn" style="background:#ddd" onclick="toggleSettings()">סגור</button>
     </div>
 
@@ -55,21 +48,21 @@
         <h2>רישום משמרת 🛵</h2>
         <div class="input-group">
             <label>💰 הכנסה ברוטו (₪)</label>
-            <input type="number" id="income" placeholder="סה"כ שהתקבל" inputmode="decimal">
+            <input type="number" id="income" placeholder="הכנס סכום ברוטו" inputmode="decimal">
         </div>
 
-        <div style="border: 1px dashed #007bff; padding: 10px; border-radius: 10px;">
-            <label>📍 מסלול</label>
-            <input type="text" id="startLoc" value="אשדוד" style="margin-bottom:5px">
-            <input type="text" id="endLoc" placeholder="יעד">
-            <label style="font-weight:normal; margin: 8px 0; display:flex; align-items:center;">
-                <input type="checkbox" id="roundTrip" style="width:18px; margin-left:8px" checked> הלוך חזור
+        <div style="border: 1px dashed #007bff; padding: 12px; border-radius: 12px;">
+            <label>📍 מסלול נסיעה</label>
+            <input type="text" id="startLoc" placeholder="מאיפה?" style="margin-bottom:8px">
+            <input type="text" id="endLoc" placeholder="לאן?">
+            <label style="font-weight:normal; margin: 10px 0; display:flex; align-items:center;">
+                <input type="checkbox" id="roundTrip" style="width:18px; height:18px; margin-left:10px" checked> הלוך חזור
             </label>
-            <button type="button" class="btn btn-calc" onclick="calculateRoute()">חשב נתוני נסיעה</button>
+            <button type="button" class="btn btn-calc" onclick="calculateRoute()">חשב דלק ומרחק ⚡</button>
             <div id="routeOutput" class="info-box" style="display:none"></div>
         </div>
 
-        <div class="input-group" style="margin-top:10px">
+        <div class="input-group" style="margin-top:15px">
             <label>⛽ עלות דלק (₪)</label>
             <input type="number" id="fuelDisplay" step="0.1">
         </div>
@@ -79,7 +72,7 @@
     </div>
 
     <div class="card">
-        <h2>סיכום היסטוריה 📊</h2>
+        <h2>היסטוריה וסיכומים 📊</h2>
         <div class="table-container">
             <table>
                 <thead>
@@ -87,14 +80,13 @@
                         <th>תאריך</th>
                         <th>ק"מ</th>
                         <th>דלק</th>
+                        <th>תותים 🍓</th>
                         <th>נקי</th>
                         <th>🗑️</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
-                <tfoot>
-                    <tr id="tableFooter" class="footer-row"></tr>
-                </tfoot>
+                <tfoot id="tableFooter"></tfoot>
             </table>
         </div>
     </div>
@@ -126,8 +118,8 @@
         const isRoundTrip = document.getElementById('roundTrip').checked;
         const output = document.getElementById('routeOutput');
 
-        output.style.display = 'block';
-        output.innerText = "מחשב...";
+        if (!start || !end) return alert("מלא מוצא ויעד");
+        output.style.display = 'block'; output.innerText = "מחשב...";
 
         try {
             const getCoords = async (l) => {
@@ -162,7 +154,7 @@
 
             document.getElementById('kmValue').value = totalKm.toFixed(1);
             document.getElementById('fuelDisplay').value = totalFuel.toFixed(1);
-            output.innerHTML = `🏁 ק"מ: ${totalKm.toFixed(1)} | דלק: ₪${totalFuel.toFixed(1)}`;
+            output.innerHTML = `📍 מרחק: ${totalKm.toFixed(1)} ק"מ | דלק: ₪${totalFuel.toFixed(1)}`;
         } catch (e) { output.innerText = "שגיאה בחישוב."; }
     }
 
@@ -174,17 +166,23 @@
 
         if (!inc || isNaN(fuel)) return alert("מלא נתונים");
 
-        const net = inc - fuel - (inc * 0.12) - (km * dep);
+        const strawberries = inc * 0.12; // ה-12% עמלה
+        const net = inc - fuel - strawberries - (km * dep);
+        
         database.ref('shifts/' + Date.now()).set({
             date: new Date().toLocaleDateString('he-IL'),
-            income: inc, fuel: fuel, km: km, net: net, timestamp: Date.now()
-        }).then(() => { alert("נשמר!"); location.reload(); });
+            income: inc, fuel: fuel, km: km, strawberries: strawberries, net: net, timestamp: Date.now()
+        }).then(() => { 
+            alert("נשמר!"); 
+            document.getElementById('income').value = '';
+            document.getElementById('fuelDisplay').value = '';
+            document.getElementById('startLoc').value = '';
+            document.getElementById('endLoc').value = '';
+        });
     }
 
     function deleteEntry(id) {
-        if(confirm("למחוק את המשמרת הזו?")) {
-            database.ref('shifts/' + id).remove();
-        }
+        if(confirm("למחוק?")) database.ref('shifts/' + id).remove();
     }
 
     database.ref('shifts').on('value', (s) => {
@@ -192,34 +190,30 @@
         const body = document.getElementById('tableBody');
         const footer = document.getElementById('tableFooter');
         body.innerHTML = '';
-        
-        let totalKm = 0, totalFuel = 0, totalNet = 0;
+        let tKm = 0, tFuel = 0, tStraw = 0, tNet = 0;
 
         if (data) {
             Object.values(data).sort((a,b)=>b.timestamp-a.timestamp).forEach(x => {
-                totalKm += x.km;
-                totalFuel += x.fuel;
-                totalNet += x.net;
-
+                tKm += x.km; tFuel += x.fuel; tStraw += (x.strawberries || 0); tNet += x.net;
                 body.innerHTML += `
                     <tr>
                         <td>${x.date}</td>
                         <td>${x.km.toFixed(0)}</td>
                         <td>${x.fuel.toFixed(0)}</td>
+                        <td style="color:red">₪${(x.strawberries || 0).toFixed(0)}</td>
                         <td><b>₪${x.net.toFixed(0)}</b></td>
                         <td><button class="del-btn" onclick="deleteEntry('${x.timestamp}')">🗑️</button></td>
                     </tr>`;
             });
-
             footer.innerHTML = `
-                <td>סה"כ</td>
-                <td>${totalKm.toFixed(0)}</td>
-                <td>₪${totalFuel.toFixed(0)}</td>
-                <td style="color:green">₪${totalNet.toFixed(0)}</td>
-                <td></td>`;
-        } else {
-            body.innerHTML = '<tr><td colspan="5">אין נתונים</td></tr>';
-            footer.innerHTML = '';
+                <tr class="footer-row">
+                    <td>סה"כ</td>
+                    <td>${tKm.toFixed(0)}</td>
+                    <td>₪${tFuel.toFixed(0)}</td>
+                    <td style="color:red">₪${tStraw.toFixed(0)}</td>
+                    <td style="color:green">₪${tNet.toFixed(0)}</td>
+                    <td></td>
+                </tr>`;
         }
     });
 </script>
