@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון שליחויות Pro - הגדרות רכב</title>
+    <title>מחשבון שליחויות Pro - דיוק עליות</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -13,21 +13,15 @@
         body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         .container { max-width: 500px; margin: auto; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2 { margin: 0 0 15px 0; color: #333; text-align: center; }
-        
         .input-group { margin-bottom: 12px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 14px; }
         input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-        
         .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-calc { background: #6c757d; color: white; margin-top: 5px; }
         .btn-save { background: var(--success); color: white; margin-top: 15px; font-size: 18px; }
-        
-        /* הגדרות מוסתרות */
         .settings-content { display: none; background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #eee; margin-top: 10px; }
         .settings-toggle { color: var(--primary); font-size: 14px; text-decoration: underline; cursor: pointer; display: block; text-align: center; margin-bottom: 10px; }
-
-        .info-box { background: #e7f3ff; padding: 12px; border-radius: 10px; margin: 15px 0; text-align: center; font-size: 14px; border: 1px solid #b3d7ff; }
+        .info-box { background: #fff3cd; padding: 12px; border-radius: 10px; margin: 15px 0; text-align: center; font-size: 14px; border: 1px solid #ffeeba; }
         table { width: 100%; margin-top: 20px; border-collapse: collapse; background: white; font-size: 13px; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
         th { background: #343a40; color: white; }
@@ -36,52 +30,43 @@
 <body>
 
 <div class="container">
-    <span class="settings-toggle" onclick="toggleSettings()">⚙️ הגדרות צריכת דלק ובלאי</span>
+    <span class="settings-toggle" onclick="toggleSettings()">⚙️ הגדרות רכב (1/${document.getElementById('cfg_kmPerLiter')?.value || '16'})</span>
     <div id="settingsArea" class="settings-content">
-        <div class="input-group">
-            <label>צריכת דלק ממוצעת (ק"מ לליטר)</label>
-            <input type="number" id="cfg_kmPerLiter" value="16" step="0.1">
-        </div>
-        <div class="input-group">
-            <label>מחיר ליטר דלק (₪)</label>
-            <input type="number" id="cfg_fuelPrice" value="7.50" step="0.01">
-        </div>
-        <div class="input-group">
-            <label>בלאי לקילומטר (₪)</label>
-            <input type="number" id="cfg_depreciation" value="0.20" step="0.01">
-        </div>
-        <button class="btn" style="background:#ddd" onclick="toggleSettings()">סגור ושמור מקומית</button>
+        <div class="input-group"><label>ק"מ לליטר (בינעירוני)</label><input type="number" id="cfg_kmPerLiter" value="16" step="0.1"></div>
+        <div class="input-group"><label>מחיר ליטר (₪)</label><input type="number" id="cfg_fuelPrice" value="7.50" step="0.01"></div>
+        <div class="input-group"><label>בלאי לק"מ (₪)</label><input type="number" id="cfg_depreciation" value="0.20" step="0.01"></div>
+        <button class="btn" style="background:#ddd" onclick="toggleSettings()">סגור</button>
     </div>
 
     <div class="card">
         <h2>משמרת שליח 🛵</h2>
         <div class="input-group">
             <label>💰 הכנסה ברוטו (₪)</label>
-            <input type="number" id="income" placeholder="0.00" inputmode="decimal">
+            <input type="number" id="income" placeholder="כמה הרווחת?" inputmode="decimal">
         </div>
 
         <div style="border: 1px dashed #007bff; padding: 12px; border-radius: 10px;">
             <label>📍 מסלול נסיעה</label>
-            <input type="text" id="startLoc" placeholder="מוצא (למשל: אשדוד)" value="אשדוד" style="margin-bottom:5px">
-            <input type="text" id="endLoc" placeholder="יעד (למשל: ירושלים)">
+            <input type="text" id="startLoc" placeholder="מוצא" value="אשדוד" style="margin-bottom:5px">
+            <input type="text" id="endLoc" placeholder="יעד">
             <label style="font-weight:normal; margin: 10px 0; display:flex; align-items:center;">
                 <input type="checkbox" id="roundTrip" style="width:20px; margin-left:10px" checked> הלוך חזור
             </label>
-            <button type="button" class="btn btn-calc" onclick="calculateRoute()">חשב מרחק ודלק אוטו'</button>
+            <button type="button" class="btn btn-calc" onclick="calculateRoute()">חשב מרחק ודלק מדויק ✅</button>
             <div id="routeOutput" class="info-box" style="display:none"></div>
         </div>
 
         <div class="input-group" style="margin-top:15px">
-            <label>⛽ דלק למשמרת (₪)</label>
+            <label>⛽ דלק מחושב (₪)</label>
             <input type="number" id="fuelDisplay" step="0.1">
         </div>
 
         <input type="hidden" id="kmValue" value="0">
-        <button class="btn btn-save" onclick="saveShift()">שמור משמרת לענן ✅</button>
+        <button class="btn btn-save" onclick="saveShift()">שמור משמרת לענן</button>
     </div>
 
     <div class="card">
-        <div id="totalSummary" style="text-align:center; font-weight:bold; font-size:1.1em"></div>
+        <div id="totalSummary" style="text-align:center; font-weight:bold;"></div>
         <table>
             <thead><tr><th>תאריך</th><th>ק"מ</th><th>דלק</th><th>נקי</th></tr></thead>
             <tbody id="tableBody"></tbody>
@@ -129,24 +114,34 @@
             
             const routeR = await fetch(`https://router.project-osrm.org/route/v1/driving/${c1.lon},${c1.lat};${c2.lon},${c2.lat}?overview=false`);
             const routeD = await routeR.json();
-            let km = routeD.routes[0].distance / 1000;
-            if (isRoundTrip) km *= 2;
+            const oneWayKm = routeD.routes[0].distance / 1000;
 
-            // לוגיקה חכמה לעליות/ירידות (אשדוד-ירושלים)
-            let fuelFactor = 1.0; 
-            if (end.includes("ירושלים") || start.includes("ירושלים")) {
-                // אם זה הלוך חזור, הממוצע מתאזן מעט אבל העלייה עדיין דורשת יותר
-                fuelFactor = 1.15; // תוספת 15% בגלל המאמץ בעליות
+            const avgKmPerL = parseFloat(document.getElementById('cfg_kmPerLiter').value);
+            const price = parseFloat(document.getElementById('cfg_fuelPrice').value);
+
+            // --- לוגיקה של עליות וירידות ---
+            let fuelOut = (oneWayKm / avgKmPerL) * price; // בסיס הלוך
+            let fuelBack = (oneWayKm / avgKmPerL) * price; // בסיס חזור
+
+            // אם נוסעים לירושלים (עלייה)
+            if (end.includes("ירושלים")) fuelOut *= 2.2; 
+            // אם חוזרים מירושלים (ירידה)
+            if (start.includes("ירושלים")) fuelOut *= 0.6;
+
+            // חישוב חזור (אם סימנת הלוך חזור)
+            if (isRoundTrip) {
+                if (end.includes("ירושלים")) fuelBack *= 0.6; // החזור מירושלים הוא ירידה
+                if (start.includes("ירושלים")) fuelBack *= 2.2; // החזור לירושלים הוא עלייה
+            } else {
+                fuelBack = 0;
             }
 
-            const avgKmPerLiter = parseFloat(document.getElementById('cfg_kmPerLiter').value);
-            const price = parseFloat(document.getElementById('cfg_fuelPrice').value);
-            
-            const fuelCost = (km / (avgKmPerLiter / fuelFactor)) * price;
+            const totalFuel = fuelOut + fuelBack;
+            const totalKm = isRoundTrip ? oneWayKm * 2 : oneWayKm;
 
-            document.getElementById('kmValue').value = km.toFixed(1);
-            document.getElementById('fuelDisplay').value = fuelCost.toFixed(1);
-            output.innerHTML = `📍 מרחק: <b>${km.toFixed(1)} ק"מ</b><br>⛽ דלק (כולל חישוב עליות): <b>₪${fuelCost.toFixed(1)}</b>`;
+            document.getElementById('kmValue').value = totalKm.toFixed(1);
+            document.getElementById('fuelDisplay').value = totalFuel.toFixed(1);
+            output.innerHTML = `🏁 מרחק: ${totalKm.toFixed(1)} ק"מ<br>⛽ דלק: <b>₪${totalFuel.toFixed(1)}</b><br><small>(חישוב מיוחד לעליות/ירידות)</small>`;
         } catch (e) { output.innerText = "שגיאה בחישוב."; }
     }
 
