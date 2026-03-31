@@ -3,75 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון שליחויות - כיול מדויק</title>
+    <title>מחשבון שליחויות - ניהול מלא</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { --primary: #007bff; --success: #28a745; --bg: #f4f7f6; }
-        body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .container { max-width: 500px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .input-group { margin-bottom: 12px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 14px; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        :root { --primary: #007bff; --success: #28a745; --danger: #dc3545; --bg: #f4f7f6; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        .container { max-width: 600px; margin: auto; }
+        .card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        h2 { margin: 0 0 15px 0; text-align: center; font-size: 1.2em; }
+        
+        .input-group { margin-bottom: 10px; }
+        label { display: block; margin-bottom: 4px; font-weight: bold; color: #555; font-size: 13px; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn-calc { background: #6c757d; color: white; margin-top: 5px; }
-        .btn-save { background: var(--success); color: white; margin-top: 15px; }
-        .settings-content { display: none; background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #eee; margin-top: 10px; }
-        .settings-toggle { color: var(--primary); font-size: 14px; text-decoration: underline; cursor: pointer; display: block; text-align: center; margin-bottom: 10px; }
-        .info-box { background: #fff3cd; padding: 12px; border-radius: 10px; margin: 15px 0; text-align: center; font-size: 14px; }
-        table { width: 100%; margin-top: 20px; border-collapse: collapse; background: white; font-size: 13px; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
-        th { background: #343a40; color: white; }
+        .btn-save { background: var(--success); color: white; margin-top: 10px; }
+        
+        .settings-content { display: none; background: #f9f9f9; padding: 12px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 10px; }
+        .settings-toggle { color: var(--primary); font-size: 13px; text-decoration: underline; cursor: pointer; display: block; text-align: center; margin-bottom: 8px; }
+
+        .info-box { background: #fff3cd; padding: 10px; border-radius: 8px; margin: 10px 0; text-align: center; font-size: 14px; }
+        
+        /* עיצוב הטבלה */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 12px; min-width: 400px; }
+        th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
+        th { background: #343a40; color: white; position: sticky; top: 0; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .footer-row { background: #eee !important; font-weight: bold; border-top: 2px solid #333; }
+        .del-btn { background: none; border: none; color: var(--danger); font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <span class="settings-toggle" onclick="toggleSettings()">⚙️ הגדרות כיול דלק</span>
+    <span class="settings-toggle" onclick="toggleSettings()">⚙️ הגדרות רכב וכיול</span>
     <div id="settingsArea" class="settings-content">
-        <div class="input-group"><label>ק"מ לליטר ממוצע</label><input type="number" id="cfg_kmPerLiter" value="16"></div>
-        <div class="input-group"><label>מקדם עלייה (למשל לירושלים)</label><input type="number" id="cfg_upFactor" value="1.6" step="0.1"></div>
-        <div class="input-group"><label>מקדם ירידה (מירושלים)</label><input type="number" id="cfg_downFactor" value="0.85" step="0.05"></div>
+        <div class="input-group"><label>ק"מ לליטר</label><input type="number" id="cfg_kmPerLiter" value="16"></div>
+        <div class="input-group"><label>מקדם עלייה</label><input type="number" id="cfg_upFactor" value="1.6" step="0.1"></div>
+        <div class="input-group"><label>מקדם ירידה</label><input type="number" id="cfg_downFactor" value="0.85" step="0.05"></div>
         <div class="input-group"><label>מחיר ליטר</label><input type="number" id="cfg_fuelPrice" value="7.50"></div>
+        <div class="input-group"><label>בלאי לק"מ (₪)</label><input type="number" id="cfg_depreciation" value="0.20"></div>
         <button class="btn" style="background:#ddd" onclick="toggleSettings()">סגור</button>
     </div>
 
     <div class="card">
-        <h2>משמרת שליח 🛵</h2>
+        <h2>רישום משמרת 🛵</h2>
         <div class="input-group">
             <label>💰 הכנסה ברוטו (₪)</label>
-            <input type="number" id="income" placeholder="0.00" inputmode="decimal">
+            <input type="number" id="income" placeholder="סה"כ שהתקבל" inputmode="decimal">
         </div>
 
-        <div style="border: 1px dashed #007bff; padding: 12px; border-radius: 10px;">
+        <div style="border: 1px dashed #007bff; padding: 10px; border-radius: 10px;">
             <label>📍 מסלול</label>
             <input type="text" id="startLoc" value="אשדוד" style="margin-bottom:5px">
             <input type="text" id="endLoc" placeholder="יעד">
-            <label style="font-weight:normal; margin: 10px 0; display:flex; align-items:center;">
-                <input type="checkbox" id="roundTrip" style="width:20px; margin-left:10px" checked> הלוך חזור
+            <label style="font-weight:normal; margin: 8px 0; display:flex; align-items:center;">
+                <input type="checkbox" id="roundTrip" style="width:18px; margin-left:8px" checked> הלוך חזור
             </label>
-            <button type="button" class="btn btn-calc" onclick="calculateRoute()">חשב דלק מדויק</button>
+            <button type="button" class="btn btn-calc" onclick="calculateRoute()">חשב נתוני נסיעה</button>
             <div id="routeOutput" class="info-box" style="display:none"></div>
         </div>
 
-        <div class="input-group" style="margin-top:15px">
-            <label>⛽ דלק (₪)</label>
+        <div class="input-group" style="margin-top:10px">
+            <label>⛽ עלות דלק (₪)</label>
             <input type="number" id="fuelDisplay" step="0.1">
         </div>
 
         <input type="hidden" id="kmValue" value="0">
-        <button class="btn btn-save" onclick="saveShift()">שמור ✅</button>
+        <button class="btn btn-save" onclick="saveShift()">שמור משמרת ✅</button>
     </div>
 
     <div class="card">
-        <div id="totalSummary" style="text-align:center; font-weight:bold;"></div>
-        <table>
-            <thead><tr><th>תאריך</th><th>ק"מ</th><th>דלק</th><th>נקי</th></tr></thead>
-            <tbody id="tableBody"></tbody>
-        </table>
+        <h2>סיכום היסטוריה 📊</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>תאריך</th>
+                        <th>ק"מ</th>
+                        <th>דלק</th>
+                        <th>נקי</th>
+                        <th>🗑️</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+                <tfoot>
+                    <tr id="tableFooter" class="footer-row"></tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -98,8 +123,8 @@
     async function calculateRoute() {
         const start = document.getElementById('startLoc').value;
         const end = document.getElementById('endLoc').value;
-        const output = document.getElementById('routeOutput');
         const isRoundTrip = document.getElementById('roundTrip').checked;
+        const output = document.getElementById('routeOutput');
 
         output.style.display = 'block';
         output.innerText = "מחשב...";
@@ -111,7 +136,6 @@
             };
             const c1 = await getCoords(start);
             const c2 = await getCoords(end);
-            
             const routeR = await fetch(`https://router.project-osrm.org/route/v1/driving/${c1.lon},${c1.lat};${c2.lon},${c2.lat}?overview=false`);
             const routeD = await routeR.json();
             const oneWayKm = routeD.routes[0].distance / 1000;
@@ -121,22 +145,16 @@
             const downF = parseFloat(document.getElementById('cfg_downFactor').value);
             const price = parseFloat(document.getElementById('cfg_fuelPrice').value);
 
-            // חישוב צריכה בסיסית לליטר לק"מ
-            const baseLitersPerKm = 1 / avgL;
+            let costOut = (oneWayKm / avgL) * price;
+            if (end.includes("ירושלים")) costOut *= upF;
+            else if (start.includes("ירושלים")) costOut *= downF;
 
-            // הלוך
-            let factorOut = 1.0;
-            if (end.includes("ירושלים")) factorOut = upF;
-            else if (start.includes("ירושלים")) factorOut = downF;
-            const costOut = oneWayKm * baseLitersPerKm * factorOut * price;
-
-            // חזור
             let costBack = 0;
             if (isRoundTrip) {
                 let factorBack = 1.0;
-                if (end.includes("ירושלים")) factorBack = downF; // חזרה מירושלים
-                else if (start.includes("ירושלים")) factorBack = upF; // חזרה לירושלים
-                costBack = oneWayKm * baseLitersPerKm * factorBack * price;
+                if (end.includes("ירושלים")) factorBack = downF;
+                else if (start.includes("ירושלים")) factorBack = upF;
+                costBack = (oneWayKm / avgL) * price * factorBack;
             }
 
             const totalFuel = costOut + costBack;
@@ -144,7 +162,7 @@
 
             document.getElementById('kmValue').value = totalKm.toFixed(1);
             document.getElementById('fuelDisplay').value = totalFuel.toFixed(1);
-            output.innerHTML = `🏁 ק"מ: ${totalKm.toFixed(1)}<br>⛽ דלק: <b>₪${totalFuel.toFixed(1)}</b>`;
+            output.innerHTML = `🏁 ק"מ: ${totalKm.toFixed(1)} | דלק: ₪${totalFuel.toFixed(1)}`;
         } catch (e) { output.innerText = "שגיאה בחישוב."; }
     }
 
@@ -163,17 +181,45 @@
         }).then(() => { alert("נשמר!"); location.reload(); });
     }
 
+    function deleteEntry(id) {
+        if(confirm("למחוק את המשמרת הזו?")) {
+            database.ref('shifts/' + id).remove();
+        }
+    }
+
     database.ref('shifts').on('value', (s) => {
         const data = s.val();
         const body = document.getElementById('tableBody');
+        const footer = document.getElementById('tableFooter');
         body.innerHTML = '';
-        let total = 0;
+        
+        let totalKm = 0, totalFuel = 0, totalNet = 0;
+
         if (data) {
             Object.values(data).sort((a,b)=>b.timestamp-a.timestamp).forEach(x => {
-                total += x.net;
-                body.innerHTML += `<tr><td>${x.date}</td><td>${x.km.toFixed(0)}</td><td>${x.fuel.toFixed(0)}</td><td><b>₪${x.net.toFixed(0)}</b></td></tr>`;
+                totalKm += x.km;
+                totalFuel += x.fuel;
+                totalNet += x.net;
+
+                body.innerHTML += `
+                    <tr>
+                        <td>${x.date}</td>
+                        <td>${x.km.toFixed(0)}</td>
+                        <td>${x.fuel.toFixed(0)}</td>
+                        <td><b>₪${x.net.toFixed(0)}</b></td>
+                        <td><button class="del-btn" onclick="deleteEntry('${x.timestamp}')">🗑️</button></td>
+                    </tr>`;
             });
-            document.getElementById('totalSummary').innerText = `רווח כולל: ₪${total.toFixed(0)}`;
+
+            footer.innerHTML = `
+                <td>סה"כ</td>
+                <td>${totalKm.toFixed(0)}</td>
+                <td>₪${totalFuel.toFixed(0)}</td>
+                <td style="color:green">₪${totalNet.toFixed(0)}</td>
+                <td></td>`;
+        } else {
+            body.innerHTML = '<tr><td colspan="5">אין נתונים</td></tr>';
+            footer.innerHTML = '';
         }
     });
 </script>
