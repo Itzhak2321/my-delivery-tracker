@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון שליחויות - גרסת התותים 🍓</title>
+    <title>מחשבון שליחויות - גרסה נקייה 🍓</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -22,7 +22,7 @@
         .btn-save { background: var(--success); color: white; margin-top: 15px; }
         .settings-content { display: none; background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 15px; }
         .settings-toggle { color: var(--primary); font-size: 13px; text-decoration: underline; cursor: pointer; display: block; text-align: center; margin-bottom: 10px; }
-        .info-box { background: #fff3cd; padding: 10px; border-radius: 8px; margin: 10px 0; text-align: center; font-size: 14px; }
+        .info-box { background: #fff3cd; padding: 10px; border-radius: 8px; margin: 10px 0; text-align: center; font-size: 14px; border: 1px solid #ffeeba; }
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; background: white; font-size: 11px; min-width: 500px; }
         th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
@@ -51,23 +51,20 @@
             <input type="number" id="income" placeholder="הכנס סכום ברוטו" inputmode="decimal">
         </div>
 
-        <div style="border: 1px dashed #007bff; padding: 12px; border-radius: 12px;">
+        <div style="border: 1px dashed #007bff; padding: 12px; border-radius: 12px; background: #f8fbff;">
             <label>📍 מסלול נסיעה</label>
             <input type="text" id="startLoc" placeholder="מאיפה?" style="margin-bottom:8px">
             <input type="text" id="endLoc" placeholder="לאן?">
-            <label style="font-weight:normal; margin: 10px 0; display:flex; align-items:center;">
-                <input type="checkbox" id="roundTrip" style="width:18px; height:18px; margin-left:10px" checked> הלוך חזור
+            <label style="font-weight:normal; margin: 12px 0; display:flex; align-items:center;">
+                <input type="checkbox" id="roundTrip" style="width:18px; height:18px; margin-left:10px"> הלוך חזור
             </label>
             <button type="button" class="btn btn-calc" onclick="calculateRoute()">חשב דלק ומרחק ⚡</button>
             <div id="routeOutput" class="info-box" style="display:none"></div>
         </div>
 
-        <div class="input-group" style="margin-top:15px">
-            <label>⛽ עלות דלק (₪)</label>
-            <input type="number" id="fuelDisplay" step="0.1">
-        </div>
-
+        <input type="hidden" id="fuelValue" value="0">
         <input type="hidden" id="kmValue" value="0">
+        
         <button class="btn btn-save" onclick="saveShift()">שמור משמרת ✅</button>
     </div>
 
@@ -153,36 +150,37 @@
             const totalKm = isRoundTrip ? oneWayKm * 2 : oneWayKm;
 
             document.getElementById('kmValue').value = totalKm.toFixed(1);
-            document.getElementById('fuelDisplay').value = totalFuel.toFixed(1);
-            output.innerHTML = `📍 מרחק: ${totalKm.toFixed(1)} ק"מ | דלק: ₪${totalFuel.toFixed(1)}`;
+            document.getElementById('fuelValue').value = totalFuel.toFixed(1);
+            output.innerHTML = `🏁 ק"מ: ${totalKm.toFixed(1)} | דלק: ₪${totalFuel.toFixed(1)}`;
         } catch (e) { output.innerText = "שגיאה בחישוב."; }
     }
 
     function saveShift() {
         const inc = parseFloat(document.getElementById('income').value);
-        const fuel = parseFloat(document.getElementById('fuelDisplay').value);
+        const fuel = parseFloat(document.getElementById('fuelValue').value);
         const km = parseFloat(document.getElementById('kmValue').value);
         const dep = parseFloat(document.getElementById('cfg_depreciation').value);
 
-        if (!inc || isNaN(fuel)) return alert("מלא נתונים");
+        if (!inc || isNaN(fuel) || fuel === 0) return alert("אנא חשב מסלול לפני השמירה");
 
-        const strawberries = inc * 0.12; // ה-12% עמלה
+        const strawberries = inc * 0.12;
         const net = inc - fuel - strawberries - (km * dep);
         
         database.ref('shifts/' + Date.now()).set({
             date: new Date().toLocaleDateString('he-IL'),
             income: inc, fuel: fuel, km: km, strawberries: strawberries, net: net, timestamp: Date.now()
         }).then(() => { 
-            alert("נשמר!"); 
+            alert("נשמר בהצלחה!"); 
             document.getElementById('income').value = '';
-            document.getElementById('fuelDisplay').value = '';
             document.getElementById('startLoc').value = '';
             document.getElementById('endLoc').value = '';
+            document.getElementById('routeOutput').style.display = 'none';
+            document.getElementById('fuelValue').value = '0';
         });
     }
 
     function deleteEntry(id) {
-        if(confirm("למחוק?")) database.ref('shifts/' + id).remove();
+        if(confirm("למחוק את המשמרת?")) database.ref('shifts/' + id).remove();
     }
 
     database.ref('shifts').on('value', (s) => {
