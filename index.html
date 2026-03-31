@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון שליחויות - גרסת הדיוק 🍓</title>
+    <title>מחשבון שליחויות - גרסת הנקי 🍓</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
@@ -16,13 +16,20 @@
         h2 { margin: 0 0 15px 0; text-align: center; font-size: 1.2em; color: #333; }
         .input-group { margin-bottom: 10px; }
         label { display: block; margin-bottom: 4px; font-weight: bold; color: #555; font-size: 13px; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        
+        .checkbox-row { display: flex; gap: 20px; margin: 15px 0; align-items: center; justify-content: center; background: #fff; padding: 10px; border-radius: 10px; border: 1px solid #e0e0e0; }
+        .checkbox-item { display: flex; align-items: center; font-size: 14px; cursor: pointer; }
+        .checkbox-item input { width: 20px; height: 20px; margin-left: 8px; cursor: pointer; }
+
         .btn { width: 100%; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .btn-calc { background: #6c757d; color: white; margin-top: 5px; }
         .btn-save { background: var(--success); color: white; margin-top: 15px; }
+        
         .settings-content { display: none; background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 15px; }
         .settings-toggle { color: var(--primary); font-size: 13px; text-decoration: underline; cursor: pointer; display: block; text-align: center; margin-bottom: 10px; }
         .info-box { background: #fff3cd; padding: 10px; border-radius: 8px; margin: 10px 0; text-align: center; font-size: 14px; border: 1px solid #ffeeba; }
+        
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; background: white; font-size: 11px; min-width: 550px; }
         th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: center; }
@@ -55,9 +62,16 @@
             <label>📍 מסלול נסיעה</label>
             <input type="text" id="startLoc" placeholder="מאיפה?" style="margin-bottom:8px">
             <input type="text" id="endLoc" placeholder="לאן?">
-            <label style="font-weight:normal; margin: 12px 0; display:flex; align-items:center;">
-                <input type="checkbox" id="roundTrip" style="width:18px; height:18px; margin-left:10px"> הלוך חזור
-            </label>
+            
+            <div class="checkbox-row">
+                <label class="checkbox-item">
+                    <input type="checkbox" id="roundTrip"> הלוך חזור
+                </label>
+                <label class="checkbox-item" style="color: #d63384; font-weight: bold;">
+                    <input type="checkbox" id="isClean"> משלוח נקי ✨
+                </label>
+            </div>
+
             <button type="button" class="btn btn-calc" onclick="calculateRoute()">חשב דלק ומרחק ⚡</button>
             <div id="routeOutput" class="info-box" style="display:none"></div>
         </div>
@@ -160,10 +174,11 @@
         const fuel = parseFloat(document.getElementById('fuelValue').value);
         const km = parseFloat(document.getElementById('kmValue').value);
         const dep = parseFloat(document.getElementById('cfg_depreciation').value);
+        const isClean = document.getElementById('isClean').checked;
 
         if (!inc || isNaN(fuel) || fuel === 0) return alert("אנא חשב מסלול לפני השמירה");
 
-        const strawberries = inc * 0.12;
+        const strawberries = isClean ? 0 : (inc * 0.12);
         const net = inc - fuel - strawberries - (km * dep);
         
         database.ref('shifts/' + Date.now()).set({
@@ -176,6 +191,8 @@
             document.getElementById('endLoc').value = '';
             document.getElementById('routeOutput').style.display = 'none';
             document.getElementById('fuelValue').value = '0';
+            document.getElementById('isClean').checked = false;
+            document.getElementById('roundTrip').checked = false;
         });
     }
 
