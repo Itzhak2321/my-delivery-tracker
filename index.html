@@ -3,98 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון שליחויות - סנכרון ענן</title>
+    <title>מחשבון שליחויות - מעקב צמוד</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    
+
     <style>
-        body { font-family: system-ui, sans-serif; background: #f4f7f6; padding: 20px; margin: 0; text-align: center; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 450px; margin: auto; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        table { width: 100%; margin-top: 20px; border-collapse: collapse; background: white; }
-        th, td { padding: 10px; border: 1px solid #eee; font-size: 14px; }
-        th { background: #f8f9fa; }
-        .total { margin-top: 15px; font-weight: bold; color: #2c3e50; font-size: 1.2em; }
+        :root { --primary: #28a745; --bg: #f0f2f5; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .container { max-width: 500px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { margin-top: 0; color: #333; font-size: 1.5rem; text-align: center; }
+        
+        .input-group { margin-bottom: 15px; text-align: right; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; background: #fafafa; }
+        
+        button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: transform 0.1s; }
+        button:active { transform: scale(0.98); }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .stat-box { background: #e9ecef; padding: 10px; border-radius: 8px; text-align: center; }
+        .stat-label { font-size: 12px; color: #666; }
+        .stat-value { font-size: 18px; font-weight: bold; color: #222; }
+
+        table { width: 100%; margin-top: 25px; border-collapse: collapse; font-size: 14px; background: white; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
+        th { background: #343a40; color: white; }
+        tr:last-child td { border: none; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>הזנת משמרת 🚚</h2>
-    <input type="number" id="income" placeholder="הכנסה ברוטו (₪)">
-    <input type="number" id="fuel" placeholder="דלק (₪)">
-    <button onclick="saveShift()">שמור נתונים לענן</button>
+<div class="container">
+    <div class="card">
+        <h2>משמרת חדשה ✍️</h2>
+        <div class="input-group">
+            <label>הכנסה ברוטו (₪)</label>
+            <input type="number" id="income" placeholder="כמה הרווחת היום?" inputmode="decimal">
+        </div>
+        <div class="input-group">
+            <label>עלות דלק (₪)</label>
+            <input type="number" id="fuel" placeholder="כמה עלה דלק?" inputmode="decimal">
+        </div>
+        <button onclick="saveToFirebase()">שמור משמרת לענן</button>
+    </div>
 
-    <div class="total" id="weeklyTotal">טוען נתונים...</div>
+    <div class="card">
+        <h2>סיכום שבועי 📊</h2>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-label">סה"כ הכנסה</div>
+                <div class="stat-value" id="totalInc">₪0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">רווח נקי (אחרי עמלה)</div>
+                <div class="stat-value" id="totalNet" style="color: var(--primary);">₪0</div>
+            </div>
+        </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>תאריך</th>
-                <th>הכנסה</th>
-                <th>רווח נקי</th>
-            </tr>
-        </thead>
-        <tbody id="historyBody"></tbody>
-    </table>
+        <table>
+            <thead>
+                <tr>
+                    <th>תאריך</th>
+                    <th>ברוטו</th>
+                    <th>נקי</th>
+                </tr>
+            </thead>
+            <tbody id="historyBody">
+                <tr><td colspan="3">טוען נתונים...</td></tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-    // הגדרות הפרויקט שלך (העתקתי מהפרויקט שיצרנו)
+    // הגדרות החיבור לפרויקט שלך
     const firebaseConfig = {
         projectId: "my-delivery-tracker-cc1f0",
         authDomain: "my-delivery-tracker-cc1f0.firebaseapp.com",
     };
-    
-    // אתחול Firebase
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // פונקציה לשמירת נתונים
-    async function saveShift() {
+    // שמירת נתונים
+    async function saveToFirebase() {
         const inc = parseFloat(document.getElementById('income').value);
         const fuel = parseFloat(document.getElementById('fuel').value);
-        if(!inc || !fuel) return alert("מלא שדות!");
 
+        if (!inc || !fuel) {
+            alert("חביבי, שכחת למלא נתונים!");
+            return;
+        }
+
+        // חישוב: הכנסה פחות דלק פחות 12% עמלה
         const net = inc - fuel - (inc * 0.12);
         const date = new Date();
 
         try {
             await db.collection("shifts").add({
-                date: date,
-                displayDate: date.toLocaleDateString('he-IL'),
+                timestamp: date,
+                dateString: date.toLocaleDateString('he-IL'),
                 income: inc,
+                fuel: fuel,
                 net: net
             });
-            alert("נשמר בהצלחה!");
-            location.reload(); // רענון להצגת הנתון החדש
-        } catch (e) {
-            alert("שגיאה בשמירה: " + e.message);
+            alert("הנתונים נשמרו בענן! 💪");
+            document.getElementById('income').value = '';
+            document.getElementById('fuel').value = '';
+            loadHistory();
+        } catch (error) {
+            alert("שגיאה בשמירה: " + error.message);
         }
     }
 
-    // פונקציה למשיכת נתונים והצגתם
-    function loadData() {
-        db.collection("shifts").orderBy("date", "desc").limit(10).get().then((querySnapshot) => {
+    // טעינת היסטוריה מהענן
+    function loadHistory() {
+        db.collection("shifts").orderBy("timestamp", "desc").limit(14).get().then((querySnapshot) => {
             const body = document.getElementById('historyBody');
             body.innerHTML = '';
+            let totalInc = 0;
             let totalNet = 0;
 
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
+                totalInc += data.income;
                 totalNet += data.net;
-                body.innerHTML += `<tr>
-                    <td>${data.displayDate}</td>
-                    <td>₪${data.income}</td>
-                    <td>₪${data.net.toFixed(2)}</td>
-                </tr>`;
+
+                body.innerHTML += `
+                    <tr>
+                        <td>${data.dateString}</td>
+                        <td>₪${data.income.toFixed(0)}</td>
+                        <td>₪${data.net.toFixed(0)}</td>
+                    </tr>
+                `;
             });
-            document.getElementById('weeklyTotal').innerHTML = `סה"כ רווח נקי (10 אחרונים): ₪${totalNet.toFixed(2)}`;
+
+            document.getElementById('totalInc').innerText = `₪${totalInc.toFixed(0)}`;
+            document.getElementById('totalNet').innerText = `₪${totalNet.toFixed(0)}`;
+            
+            if(querySnapshot.empty) {
+                body.innerHTML = '<tr><td colspan="3">אין עדיין נתונים. הגיע זמן לעבוד! 🛵</td></tr>';
+            }
         });
     }
 
-    loadData();
+    // טעינה ראשונית
+    loadHistory();
 </script>
+
 </body>
 </html>
