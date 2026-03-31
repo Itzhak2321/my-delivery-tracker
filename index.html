@@ -3,154 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון שליחויות - מעקב צמוד</title>
+    <title>מחשבון שליחויות - My Delivery</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { --primary: #28a745; --bg: #f0f2f5; }
+        :root { --primary: #007bff; --success: #28a745; --bg: #f8f9fa; }
         body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         .container { max-width: 500px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2 { margin-top: 0; color: #333; font-size: 1.5rem; text-align: center; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        h2 { margin: 0 0 15px 0; color: #333; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         
-        .input-group { margin-bottom: 15px; text-align: right; }
+        .input-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; background: #fafafa; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; background: #fff; }
         
-        button { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: transform 0.1s; }
-        button:active { transform: scale(0.98); }
+        button { width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.97); background: #218838; }
 
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .stat-box { background: #e9ecef; padding: 10px; border-radius: 8px; text-align: center; }
-        .stat-label { font-size: 12px; color: #666; }
-        .stat-value { font-size: 18px; font-weight: bold; color: #222; }
+        .summary-box { background: #e9ecef; padding: 15px; border-radius: 10px; margin-top: 20px; display: flex; justify-content: space-around; }
+        .stat { text-align: center; }
+        .stat-label { font-size: 12px; color: #666; display: block; }
+        .stat-value { font-size: 20px; font-weight: bold; color: #222; }
 
-        table { width: 100%; margin-top: 25px; border-collapse: collapse; font-size: 14px; background: white; border-radius: 10px; overflow: hidden; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
         th, td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
-        th { background: #343a40; color: white; }
-        tr:last-child td { border: none; }
+        th { background: #343a40; color: white; font-size: 13px; }
+        .btn-delete { color: #dc3545; background: none; border: none; cursor: pointer; font-size: 18px; width: auto; padding: 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <h2>משמרת חדשה ✍️</h2>
+        <h2>משמרת חדשה 🛵</h2>
         <div class="input-group">
             <label>הכנסה ברוטו (₪)</label>
-            <input type="number" id="income" placeholder="כמה הרווחת היום?" inputmode="decimal">
+            <input type="number" id="income" placeholder="0.00" inputmode="decimal">
         </div>
         <div class="input-group">
             <label>עלות דלק (₪)</label>
-            <input type="number" id="fuel" placeholder="כמה עלה דלק?" inputmode="decimal">
+            <input type="number" id="fuel" placeholder="0.00" inputmode="decimal">
         </div>
-        <button onclick="saveToFirebase()">שמור משמרת לענן</button>
+        <button onclick="saveData()">שמור נתונים לענן</button>
     </div>
 
     <div class="card">
-        <h2>סיכום שבועי 📊</h2>
-        <div class="stats-grid">
-            <div class="stat-box">
-                <div class="stat-label">סה"כ הכנסה</div>
+        <h2>היסטוריה שבועית 🗓️</h2>
+        <div class="summary-box">
+            <div class="stat">
+                <span class="stat-label">סה"כ הכנסה</span>
                 <div class="stat-value" id="totalInc">₪0</div>
             </div>
-            <div class="stat-box">
-                <div class="stat-label">רווח נקי (אחרי עמלה)</div>
-                <div class="stat-value" id="totalNet" style="color: var(--primary);">₪0</div>
+            <div class="stat">
+                <span class="stat-label">רווח נקי</span>
+                <div class="stat-value" id="totalNet" style="color: var(--success);">₪0</div>
             </div>
         </div>
 
-        <table>
+        <table id="historyTable">
             <thead>
                 <tr>
                     <th>תאריך</th>
                     <th>ברוטו</th>
                     <th>נקי</th>
+                    <th>✖</th>
                 </tr>
             </thead>
-            <tbody id="historyBody">
-                <tr><td colspan="3">טוען נתונים...</td></tr>
+            <tbody id="tableBody">
+                <tr><td colspan="4">טוען נתונים...</td></tr>
             </tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // הגדרות החיבור לפרויקט שלך
+    // הגדרות Firebase שסיפקת
     const firebaseConfig = {
-        projectId: "my-delivery-tracker-cc1f0",
-        authDomain: "my-delivery-tracker-cc1f0.firebaseapp.com",
+        apiKey: "AIzaSyDShy-oDCCBM3NehLCfJdbhXaX8kbcax_8",
+        authDomain: "my-delivere-tracker.firebaseapp.com",
+        databaseURL: "https://my-delivere-tracker-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "my-delivere-tracker",
+        storageBucket: "my-delivere-tracker.firebasestorage.app",
+        messagingSenderId: "529344024028",
+        appId: "1:529344024028:web:a5cf000943408913c79319",
+        measurementId: "G-GE58HKQKLK"
     };
 
+    // אתחול
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    const database = firebase.database();
 
     // שמירת נתונים
-    async function saveToFirebase() {
+    function saveData() {
         const inc = parseFloat(document.getElementById('income').value);
         const fuel = parseFloat(document.getElementById('fuel').value);
 
-        if (!inc || !fuel) {
-            alert("חביבי, שכחת למלא נתונים!");
+        if (isNaN(inc) || isNaN(fuel)) {
+            alert("נא להזין מספרים תקינים בשני השדות");
             return;
         }
 
-        // חישוב: הכנסה פחות דלק פחות 12% עמלה
+        // חישוב רווח נקי: הכנסה - דלק - 12% עמלה
         const net = inc - fuel - (inc * 0.12);
-        const date = new Date();
+        const date = new Date().toLocaleDateString('he-IL');
+        const timestamp = Date.now();
 
-        try {
-            await db.collection("shifts").add({
-                timestamp: date,
-                dateString: date.toLocaleDateString('he-IL'),
-                income: inc,
-                fuel: fuel,
-                net: net
-            });
-            alert("הנתונים נשמרו בענן! 💪");
+        database.ref('shifts/' + timestamp).set({
+            date: date,
+            income: inc,
+            net: net,
+            timestamp: timestamp
+        }).then(() => {
             document.getElementById('income').value = '';
             document.getElementById('fuel').value = '';
-            loadHistory();
-        } catch (error) {
+            alert("הנתונים נשמרו בהצלחה!");
+        }).catch((error) => {
             alert("שגיאה בשמירה: " + error.message);
-        }
-    }
-
-    // טעינת היסטוריה מהענן
-    function loadHistory() {
-        db.collection("shifts").orderBy("timestamp", "desc").limit(14).get().then((querySnapshot) => {
-            const body = document.getElementById('historyBody');
-            body.innerHTML = '';
-            let totalInc = 0;
-            let totalNet = 0;
-
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                totalInc += data.income;
-                totalNet += data.net;
-
-                body.innerHTML += `
-                    <tr>
-                        <td>${data.dateString}</td>
-                        <td>₪${data.income.toFixed(0)}</td>
-                        <td>₪${data.net.toFixed(0)}</td>
-                    </tr>
-                `;
-            });
-
-            document.getElementById('totalInc').innerText = `₪${totalInc.toFixed(0)}`;
-            document.getElementById('totalNet').innerText = `₪${totalNet.toFixed(0)}`;
-            
-            if(querySnapshot.empty) {
-                body.innerHTML = '<tr><td colspan="3">אין עדיין נתונים. הגיע זמן לעבוד! 🛵</td></tr>';
-            }
         });
     }
 
-    // טעינה ראשונית
-    loadHistory();
+    // משיכת נתונים והצגתם בזמן אמת
+    database.ref('shifts').on('value', (snapshot) => {
+        const data = snapshot.val();
+        const tableBody = document.getElementById('tableBody');
+        tableBody.innerHTML = '';
+        
+        let sumInc = 0;
+        let sumNet = 0;
+
+        if (data) {
+            // הפיכה למערך ומיון לפי זמן (החדש ביותר למעלה)
+            const sortedShifts = Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
+
+            sortedShifts.forEach((shift) => {
+                sumInc += shift.income;
+                sumNet += shift.net;
+
+                tableBody.innerHTML += `
+                    <tr>
+                        <td>${shift.date}</td>
+                        <td>₪${shift.income.toFixed(0)}</td>
+                        <td>₪${shift.net.toFixed(0)}</td>
+                        <td><button class="btn-delete" onclick="deleteShift('${shift.timestamp}')">🗑️</button></td>
+                    </tr>
+                `;
+            });
+        } else {
+            tableBody.innerHTML = '<tr><td colspan="4">אין נתונים שמורים</td></tr>';
+        }
+
+        document.getElementById('totalInc').innerText = `₪${sumInc.toFixed(0)}`;
+        document.getElementById('totalNet').innerText = `₪${sumNet.toFixed(0)}`;
+    });
+
+    // מחיקת שורה
+    function deleteShift(id) {
+        if(confirm("למחוק את המשמרת הזו?")) {
+            database.ref('shifts/' + id).remove();
+        }
+    }
 </script>
 
 </body>
