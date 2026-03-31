@@ -3,34 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון שליחויות - My Delivery</title>
+    <title>מחשבון שליחויות - כולל בלאי</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
     <style>
         :root { --primary: #007bff; --success: #28a745; --bg: #f8f9fa; }
-        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         .container { max-width: 500px; margin: auto; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
         h2 { margin: 0 0 15px 0; color: #333; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         
         .input-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; background: #fff; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
         
-        button { width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:active { transform: scale(0.97); background: #218838; }
-
-        .summary-box { background: #e9ecef; padding: 15px; border-radius: 10px; margin-top: 20px; display: flex; justify-content: space-around; }
+        button { width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        
+        .summary-box { background: #e9ecef; padding: 15px; border-radius: 10px; margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .stat { text-align: center; }
-        .stat-label { font-size: 12px; color: #666; display: block; }
-        .stat-value { font-size: 20px; font-weight: bold; color: #222; }
+        .stat-label { font-size: 11px; color: #666; display: block; }
+        .stat-value { font-size: 18px; font-weight: bold; }
 
-        table { width: 100%; margin-top: 20px; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
-        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
-        th { background: #343a40; color: white; font-size: 13px; }
-        .btn-delete { color: #dc3545; background: none; border: none; cursor: pointer; font-size: 18px; width: auto; padding: 0; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; background: white; font-size: 13px; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
+        th { background: #343a40; color: white; }
     </style>
 </head>
 <body>
@@ -46,18 +44,22 @@
             <label>עלות דלק (₪)</label>
             <input type="number" id="fuel" placeholder="0.00" inputmode="decimal">
         </div>
+        <div class="input-group">
+            <label>קילומטרים שבוצעו (ק"מ)</label>
+            <input type="number" id="km" placeholder="כמה נסעת היום?" inputmode="decimal">
+        </div>
         <button onclick="saveData()">שמור נתונים לענן</button>
     </div>
 
     <div class="card">
-        <h2>היסטוריה שבועית 🗓️</h2>
+        <h2>סיכום רווחים 🗓️</h2>
         <div class="summary-box">
             <div class="stat">
                 <span class="stat-label">סה"כ הכנסה</span>
                 <div class="stat-value" id="totalInc">₪0</div>
             </div>
             <div class="stat">
-                <span class="stat-label">רווח נקי</span>
+                <span class="stat-label">רווח נקי (אחרי בלאי)</span>
                 <div class="stat-value" id="totalNet" style="color: var(--success);">₪0</div>
             </div>
         </div>
@@ -66,20 +68,17 @@
             <thead>
                 <tr>
                     <th>תאריך</th>
-                    <th>ברוטו</th>
+                    <th>ק"מ</th>
                     <th>נקי</th>
                     <th>✖</th>
                 </tr>
             </thead>
-            <tbody id="tableBody">
-                <tr><td colspan="4">טוען נתונים...</td></tr>
-            </tbody>
+            <tbody id="tableBody"></tbody>
         </table>
     </div>
 </div>
 
 <script>
-    // הגדרות Firebase שסיפקת
     const firebaseConfig = {
         apiKey: "AIzaSyDShy-oDCCBM3NehLCfJdbhXaX8kbcax_8",
         authDomain: "my-delivere-tracker.firebaseapp.com",
@@ -91,78 +90,67 @@
         measurementId: "G-GE58HKQKLK"
     };
 
-    // אתחול
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // שמירת נתונים
     function saveData() {
         const inc = parseFloat(document.getElementById('income').value);
         const fuel = parseFloat(document.getElementById('fuel').value);
+        const km = parseFloat(document.getElementById('km').value);
 
-        if (isNaN(inc) || isNaN(fuel)) {
-            alert("נא להזין מספרים תקינים בשני השדות");
+        if (isNaN(inc) || isNaN(fuel) || isNaN(km)) {
+            alert("נא למלא את כל השדות במספרים");
             return;
         }
 
-        // חישוב רווח נקי: הכנסה - דלק - 12% עמלה
-        const net = inc - fuel - (inc * 0.12);
+        // חישוב: הכנסה - דלק - 12% עמלה - (20 אגורות * קילומטר)
+        const depreciation = km * 0.20;
+        const commission = inc * 0.12;
+        const net = inc - fuel - commission - depreciation;
+        
         const date = new Date().toLocaleDateString('he-IL');
         const timestamp = Date.now();
 
         database.ref('shifts/' + timestamp).set({
             date: date,
             income: inc,
+            km: km,
             net: net,
             timestamp: timestamp
         }).then(() => {
             document.getElementById('income').value = '';
             document.getElementById('fuel').value = '';
-            alert("הנתונים נשמרו בהצלחה!");
-        }).catch((error) => {
-            alert("שגיאה בשמירה: " + error.message);
+            document.getElementById('km').value = '';
+            alert("נשמר! הרווח הנקי למשמרת: ₪" + net.toFixed(2));
         });
     }
 
-    // משיכת נתונים והצגתם בזמן אמת
     database.ref('shifts').on('value', (snapshot) => {
         const data = snapshot.val();
         const tableBody = document.getElementById('tableBody');
         tableBody.innerHTML = '';
-        
-        let sumInc = 0;
-        let sumNet = 0;
+        let sumInc = 0; let sumNet = 0;
 
         if (data) {
-            // הפיכה למערך ומיון לפי זמן (החדש ביותר למעלה)
-            const sortedShifts = Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
-
-            sortedShifts.forEach((shift) => {
+            const sorted = Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
+            sorted.forEach((shift) => {
                 sumInc += shift.income;
                 sumNet += shift.net;
-
                 tableBody.innerHTML += `
                     <tr>
                         <td>${shift.date}</td>
-                        <td>₪${shift.income.toFixed(0)}</td>
+                        <td>${shift.km}</td>
                         <td>₪${shift.net.toFixed(0)}</td>
-                        <td><button class="btn-delete" onclick="deleteShift('${shift.timestamp}')">🗑️</button></td>
-                    </tr>
-                `;
+                        <td><button onclick="deleteShift('${shift.timestamp}')" style="background:none; border:none; color:red; cursor:pointer;">🗑️</button></td>
+                    </tr>`;
             });
-        } else {
-            tableBody.innerHTML = '<tr><td colspan="4">אין נתונים שמורים</td></tr>';
         }
-
         document.getElementById('totalInc').innerText = `₪${sumInc.toFixed(0)}`;
         document.getElementById('totalNet').innerText = `₪${sumNet.toFixed(0)}`;
     });
 
-    // מחיקת שורה
     function deleteShift(id) {
-        if(confirm("למחוק את המשמרת הזו?")) {
-            database.ref('shifts/' + id).remove();
-        }
+        if(confirm("למחוק?")) database.ref('shifts/' + id).remove();
     }
 </script>
 
